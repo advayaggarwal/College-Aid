@@ -7,6 +7,7 @@ function Login() {
     password: "",
   });
 
+
   function submitted(e) {
     e.preventDefault();
     console.log(user);
