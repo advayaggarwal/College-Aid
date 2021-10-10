@@ -12,6 +12,8 @@ const upload = multer({
     dest: 'uploads/'
 });
 
+const uploadImg = require("./s3Upload.js");
+
 const saltRounds = 10;
 
 const app = express();
@@ -108,6 +110,46 @@ app.post("/upload", upload.single('file'), async (req, res) => {
     console.log(email, description);
     console.log(file);
     const result = await uploadFile(file);
+
+    const link = result.Location;
+    const note = new Note({
+        email,
+        description,
+        link
+    });
+
+    note.save(function (err, data) {
+        if (err) console.log("Note not saved");
+        else console.log(data);
+    });
+
+    console.log(result);
+    res.send("🔥");
+});
+
+app.get("/notes", async function (req, res) {
+    const notes = await Note.find({});
+
+    res.send(notes);
+});
+
+app.get("/imgPost", function (req, res) {
+
+});
+
+app.post("/imgPost", upload.single('file'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        res.send("Failed");
+        return;
+    }
+    const {
+        email,
+        description
+    } = req.body;
+    console.log(email, description);
+    console.log(file);
+    const result = await uploadImg(file);
 
     const link = result.Location;
     const note = new Note({
