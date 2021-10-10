@@ -1,7 +1,16 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+
 const bcrypt = require("bcrypt");
+const multer = require('multer');
+const {
+    uploadFile
+} = require('./s3');
+
+const upload = multer({
+    dest: 'uploads/'
+});
 
 const saltRounds = 10;
 
@@ -16,12 +25,10 @@ mongoose.connect("mongodb://localhost:27017/userDB", {
     useNewUrlParser: true
 });
 
-const userSchema = {
-    email: String,
-    password: String
-};
+const Note = require("./models/notes/notes.js")
+const User = require("./models/users/users.js");
 
-const User = new mongoose.model("User", userSchema);
+
 
 app.get("/", function (req, res) {
     res.send("Welcome to college aid");
@@ -86,6 +93,36 @@ app.post("/login", function (req, res) {
             }
         }
     });
+});
+
+app.post("/upload", upload.single('file'), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        res.send("Failed");
+        return;
+    }
+    const {
+        email,
+        description
+    } = req.body;
+    console.log(email, description);
+    console.log(file);
+    const result = await uploadFile(file);
+
+    const link = result.Location;
+    const note = new Note({
+        email,
+        description,
+        link
+    });
+
+    note.save(function (err, data) {
+        if (err) console.log("Note not saved");
+        else console.log(data);
+    });
+
+    console.log(result);
+    res.send("🔥");
 });
 
 app.listen(3000, function (req, res) {
